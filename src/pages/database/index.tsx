@@ -7,7 +7,7 @@ import BezierCurveWithScrollingButtons from "@/components/bezier-curve/BezierCur
 
 type Props = {};
 
-const index = ({}: Props) => {
+const Index = ({}: Props) => {
   const [subStack, setSubstack] = useState<{ key: string; refrence: any }[]>(
     []
   );
@@ -99,4 +99,4 @@ const index = ({}: Props) => {
   );
 };
 
-export default index;
+export default Index;
