@@ -60,7 +60,10 @@ const JsonStack = ({
       <h2>{isSubStack ? "Sub Object" : masterKey}</h2>
       <div className="mt-4 flex flex-col gap-4">
         {values.map((item: any, index: number) => (
-          <div className="flex gap-4 items-center justify-start w-full">
+          <div
+            className="flex gap-4 items-center justify-start w-full"
+            key={`mainstack-${index}`}
+          >
             <Input
               className="w-40"
               type="text"

@@ -81,6 +81,7 @@ const Index = ({}: Props) => {
         />
         {subStack.map((item, index) => (
           <JsonStack
+            key={`substack-${index}`}
             isSubStack={true}
             addNewField={addNewField}
             optionsData={subOptions}

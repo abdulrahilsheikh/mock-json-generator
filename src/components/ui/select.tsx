@@ -114,8 +114,10 @@ const SelectComponent = ({ onValueChange, list }: any) => (
     </SelectTrigger>
     <SelectContent>
       <SelectGroup className="max-h-[25vh]">
-        {list.map((item: any) => (
-          <SelectItem value={item}>{item}</SelectItem>
+        {list.map((item: any, index: number) => (
+          <SelectItem key={`option-${index}`} value={item}>
+            {item}
+          </SelectItem>
         ))}
       </SelectGroup>
     </SelectContent>
