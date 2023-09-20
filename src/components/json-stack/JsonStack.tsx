@@ -44,7 +44,7 @@ const JsonStack = ({
 }: Props) => {
   const masterKey = isSubStack ? `${currentFieldKey}.root` : currentFieldKey;
   const handleNew = (index: number, ref: any) => {
-    const obj = values(`${currentFieldKey}[${index}]`);
+    const obj = values(`${masterKey}[${index}]`);
     if (!branch[obj.subType]) {
       const uuid = fakerInstance.string.uuid();
       setValue(`${currentFieldKey}[${index}].subType`, uuid);
