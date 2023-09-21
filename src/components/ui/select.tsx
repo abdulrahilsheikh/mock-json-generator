@@ -3,6 +3,8 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import { Check, ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useRef, useState } from "react";
+import { Button } from "./button";
 
 const Select = SelectPrimitive.Root;
 
@@ -107,23 +109,48 @@ const SelectSeparator = React.forwardRef<
 ));
 SelectSeparator.displayName = SelectPrimitive.Separator.displayName;
 
-const SelectComponent = ({ onValueChange, list }: any) => (
-  <Select onValueChange={onValueChange}>
-    <SelectTrigger className="w-[180px]">
-      <SelectValue placeholder="Select a fruit" />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectGroup className="max-h-[25vh]">
-        {list.map((item: any, index: number) => (
-          <SelectItem key={`option-${index}`} value={item}>
-            {item}
-          </SelectItem>
-        ))}
-      </SelectGroup>
-    </SelectContent>
-  </Select>
-);
+const SelectComponent = ({ onValueChange, list, name, value }: any) => {
+  const [onClicked, setOnClicked] = useState(false);
 
+  const temp = useRef<any>({ value: value });
+  return onClicked ? (
+    <Select
+      required
+      onValueChange={(e) => {
+        temp.current.value = e;
+        onValueChange(e);
+        setOnClicked(false);
+      }}
+      open={onClicked}
+    >
+      <SelectTrigger
+        onBlur={() => {
+          setOnClicked(false);
+        }}
+        className="w-[120px]"
+      >
+        <SelectValue placeholder={`Select ${name}`} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup className="max-h-[25vh]">
+          {list.map((item: any, index: number) => (
+            <SelectItem key={`option-${index}`} value={item}>
+              {item}
+            </SelectItem>
+          ))}
+        </SelectGroup>
+      </SelectContent>
+    </Select>
+  ) : (
+    <Button
+      className="w-[120px]"
+      type="button"
+      onClick={() => setOnClicked(true)}
+    >
+      {value}
+    </Button>
+  );
+};
 export {
   Select,
   SelectGroup,

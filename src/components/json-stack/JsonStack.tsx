@@ -1,101 +1,203 @@
-import React from "react";
+import React, { RefObject, useEffect } from "react";
 import {
-  UseFormGetValues,
-  UseFormRegister,
+  Control,
+  UseFieldArrayReturn,
   UseFormSetValue,
+  UseFormWatch,
+  useFieldArray,
 } from "react-hook-form";
 import { Input } from "../ui/input";
-import {
-  Select,
-  SelectComponent,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
+import { SelectComponent } from "../ui/select";
 import { FieldType, fakerInstance } from "@/constants/constants";
 import { Button } from "../ui/button";
+import {
+  IDefaultValues,
+  FieldsArrayType,
+  ISubstackHandler,
+  IRootElement,
+} from "@/pages/index.types";
+import { Checkbox } from "../ui/checkbox";
 
 type Props = {
   currentFieldKey: string;
-  register: UseFormRegister<any>;
-  values: any;
-  branch: any;
+  values: UseFormWatch<IDefaultValues>;
   optionsData: { [data: string]: any };
   subOptions: string[];
-  setValue: UseFormSetValue<any>;
-  setSubstackVaue: any;
-  addNewField: any;
+  setValue: UseFormSetValue<IDefaultValues>;
+  setSubstackVaue: ISubstackHandler;
   isSubStack?: boolean;
+  subStackValue: string;
+  control: Control<IDefaultValues>;
+  lastRef?: RefObject<HTMLElement> | null;
 };
 
 const JsonStack = ({
   currentFieldKey,
-  register,
   values,
   optionsData,
   subOptions,
   setValue,
   setSubstackVaue,
-  addNewField,
-  branch,
+  control,
   isSubStack = false,
+  subStackValue,
+  lastRef,
 }: Props) => {
-  const masterKey = isSubStack ? `${currentFieldKey}.root` : currentFieldKey;
-  const handleNew = (index: number, ref: any) => {
-    const obj = values(`${masterKey}[${index}]`);
+  const branch = values("branch");
+  const masterKey: any = isSubStack
+    ? `${currentFieldKey}.root`
+    : currentFieldKey;
+
+  const { fields, update, remove, append } = useFieldArray({
+    control,
+    name: masterKey,
+  });
+
+  const handleNew = (index: number) => {
+    const obj: IRootElement = values(`${masterKey}[${index}]` as any);
     if (!branch[obj.subType]) {
       const uuid = fakerInstance.string.uuid();
-      setValue(`${currentFieldKey}[${index}].subType`, uuid);
-      setValue(`branch.${uuid}`, { key: obj.key, root: [], isArray: false });
-      setSubstackVaue(`branch.${uuid}`, ref);
+
+      update(index, { ...fields[index], subType: uuid });
+      setValue(`branch.${uuid}`, {
+        key: obj.key,
+        root: [{ key: "", type: "person", subType: "fullName" }],
+        params: { isArray: false, quantity: 1 },
+      });
+      setSubstackVaue(`branch.${uuid}`);
     } else {
-      setSubstackVaue(`branch.${obj.subType}`, ref);
+      setSubstackVaue(`branch.${obj.subType}`);
     }
   };
+  const { params } = isSubStack ? values(currentFieldKey as any) : values();
+  console.log(params);
 
   return (
-    <div className="w-48 min-w-max h-full bg-primary-foreground/75 rounded p-4 overflow-y-auto overflow-x-hidden">
-      <h2>{isSubStack ? "Sub Object" : masterKey}</h2>
-      <div className="mt-4 flex flex-col gap-4">
-        {values(masterKey).map((item: any, index: number) => (
-          <div
-            className="flex gap-4 items-center justify-start w-full"
-            key={`mainstack-${index}`}
+    <div
+      ref={(r) => {
+        if (lastRef) {
+          ///@ts-ignore
+          lastRef.current = r;
+        }
+      }}
+      className="w-48 min-w-max h-full bg-primary-foreground/75 rounded p-4 overflow-y-auto "
+    >
+      <div className="w-full flex justify-between">
+        <h2>
+          {isSubStack
+            ? `Sub Object of ${values(currentFieldKey as any).key}`
+            : "Root Object"}
+        </h2>
+        <div className="flex items-center space-x-2">
+          <Checkbox id="isArray" />
+          <label
+            htmlFor="isArray"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
           >
-            <Input
-              className="w-40"
-              type="text"
-              placeholder="Object Key"
-              {...register(`${masterKey}[${index}].key`)}
-            />
-
-            <SelectComponent
-              onValueChange={(value: any) => {
-                setValue(`${masterKey}[${index}].type`, value);
-              }}
-              list={subOptions}
-            />
-            {item.type != FieldType.OBJECT ? (
-              <SelectComponent
-                onValueChange={(value: any) => {
-                  setValue(`${masterKey}[${index}].subType`, value);
-                }}
-                list={optionsData[values(`${masterKey}[${index}].type`)]}
-              />
-            ) : (
+            Is Array
+          </label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Input
+            className="w-40"
+            type="text"
+            placeholder="Object Key"
+            defaultValue={"key"}
+            onChange={(e) => {}}
+            required
+          />
+        </div>
+      </div>
+      <div className="mt-4 flex flex-col gap-4">
+        {fields.map((field, index: number) => {
+          const { key, subType, type, id }: any = field;
+          return (
+            <div
+              className="flex gap-4 items-center justify-start w-full"
+              key={`mainstack-${index}-${subStackValue?.split(".")[1]}`}
+            >
               <Button
-                className="ml-auto w-8 h-8 bg-primary rounded"
-                onClick={(e) => {
-                  handleNew(index, e);
-                }}
                 type="button"
-              ></Button>
-            )}
-          </div>
-        ))}
-        <Button type="button" onClick={() => addNewField(masterKey)}></Button>
+                onClick={() => {
+                  remove(index);
+                  if (subStackValue?.split(".")[1] == subType) {
+                    setSubstackVaue("", true);
+                  }
+                }}
+              >
+                X
+              </Button>
+              <Input
+                className="w-40"
+                type="text"
+                placeholder="Object Key"
+                defaultValue={key}
+                onChange={(e) => {
+                  update(index, {
+                    subType,
+                    type,
+                    key: e.target.value,
+                  });
+                  if (type == "object") {
+                    const temp = values(`branch.${subType}`);
+                    temp.key = e.target.value;
+                    setValue(`branch.${subType}`, temp);
+                  }
+                }}
+                required
+              />
+
+              <SelectComponent
+                name={"collection"}
+                onValueChange={(value: any) => {
+                  update(index, {
+                    key,
+                    type: value,
+                    subType: value != type ? "" : subType,
+                  });
+                }}
+                list={subOptions}
+                value={type}
+              />
+              {type != FieldType.OBJECT ? (
+                <SelectComponent
+                  name={"type"}
+                  onValueChange={(value: any) => {
+                    update(index, { key, type, subType: value });
+                    // setValue(`${masterKey}[${index}].subType`, value);
+                  }}
+                  list={
+                    optionsData[values(`${masterKey}[${index}].type` as any)] ??
+                    []
+                  }
+                  value={subType}
+                />
+              ) : (
+                <div className="ml-auto relative">
+                  <Button
+                    className={`" w-8 h-8 bg-primary rounded ${
+                      subStackValue?.split(".")[1] == subType
+                        ? "bg-purple-700"
+                        : ""
+                    } `}
+                    onClick={() => {
+                      handleNew(index);
+                    }}
+                    type="button"
+                  ></Button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+        <Button
+          type="button"
+          onClick={() =>
+            append({ key: "", type: "person", subType: "fullName" })
+          }
+        >
+          Add Field
+        </Button>
       </div>
     </div>
   );
